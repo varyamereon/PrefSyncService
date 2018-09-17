@@ -11,7 +11,7 @@ using Android.Preferences;
 using Android.Runtime;
 using Android.Util;
 
-namespace PrideWearCompanion.Config
+namespace PrefSyncService
 {
     /// <summary>
     /// A generic class for synchronizing <see cref="ISharedPreferences"/> between devices on a Wear OS
@@ -170,7 +170,7 @@ namespace PrideWearCompanion.Config
                             editor.Remove(key);
                         continue;
                     }
-                    if (allPrefs != null && value.Equals(allPrefs[key]))
+                    if (allPrefs != null && allPrefs.TryGetValue(key, out var found) && value.Equals(found))
                     {
                         // No change to value.
                         continue;
@@ -257,10 +257,20 @@ namespace PrideWearCompanion.Config
             /// default), use this ctor.
             /// </summary>
             /// <param name="context">The context of the preferences whose values are to be synced.</param>
-            /// <param name="settings">An <see cref="ISharedPreferences"/> instance from which to
-            /// retrieve values of the preferences.
-            /// </param>
-            public PrefListener(Context context, ISharedPreferences settings)
+            /// <param name="sharedPrefsName">The path of the preferences to be synced.</param>
+            public PrefListener(Context context, string sharedPrefsName)
+            {
+                PrefSyncService.sharedPrefsName = sharedPrefsName;
+                this.settings = context.GetSharedPreferences(sharedPrefsName, FileCreationMode.Private);
+                this.prefHandler = new PrefHandler(context);
+            }
+
+            /// <summary>
+            /// This ctor is internal as it assumes the PrefListener has already been created.
+            /// </summary>
+            /// <param name="context"></param>
+            /// <param name="settings"></param>
+            internal PrefListener(Context context, ISharedPreferences settings)
             {
                 this.settings = settings;
                 this.prefHandler = new PrefHandler(context);
